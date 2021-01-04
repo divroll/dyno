@@ -298,12 +298,8 @@ public class Dyno {
      * @return true if key exists, false if otherwise
      */
     public boolean isExists(String key) {
-        try {
-            s3Client.getObjectMetadata(bucketName, key);
-        } catch(AmazonServiceException e) {
-            return false;
-        }
-        return true;
+        ListObjectsV2Result result = s3Client.listObjectsV2(bucketName, key);
+        return result.getKeyCount() > 0;
     }
 
     /**
