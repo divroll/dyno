@@ -33,6 +33,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -45,28 +46,29 @@ import java.util.UUID;
  */
 public class Dyno {
 
-    private AmazonS3 s3Client = null;
-    private String bucketName = null;
-    private String keySpace = null;
-    private Integer bufferSize = null;
+    private AmazonS3 s3Client;
+    private String bucketName;
+    private String keySpace;
+    private Integer bufferSize;
 
     public Dyno(String accessKey, String secretKey, String s3Endpoint, String region, String bucketName) {
-        this(accessKey, secretKey, s3Endpoint, region, bucketName, null, null);
+        this(null, accessKey, secretKey, s3Endpoint, region, bucketName, null, null);
     }
 
     public Dyno(String accessKey, String secretKey, String s3Endpoint, String region, String bucketName, String keySpace) {
-        this(accessKey, secretKey, s3Endpoint, region, bucketName, keySpace, null);
+        this(null, accessKey, secretKey, s3Endpoint, region, bucketName, keySpace, null);
     }
 
-    public Dyno(String accessKey, String secretKey, String s3Endpoint, String region, String bucketName, String keySpace, Integer bufferSize) {
-        BasicAWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
+    public Dyno(AmazonS3 s3Client, String accessKey, String secretKey, String s3Endpoint, String region, String bucketName, String keySpace, Integer bufferSize) {
         if(s3Client == null) {
+            BasicAWSCredentials credentials = new BasicAWSCredentials(accessKey, secretKey);
             s3Client = AmazonS3ClientBuilder
                     .standard()
                     .withCredentials(new AWSStaticCredentialsProvider(credentials))
                     .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(s3Endpoint, region))
                     .build();
         }
+        this.s3Client = s3Client;
         this.bucketName = bucketName == null ? DynoClientBuilder.DEFAULT_BUCKET_NAME : bucketName;
         this.keySpace = keySpace == null ? DynoClientBuilder.DEFAULT_KEY_SPACE : keySpace;
         this.bufferSize = bufferSize == null ? DynoClientBuilder.DEFAULT_BUFFER_SIZE : bufferSize;

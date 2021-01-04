@@ -18,8 +18,8 @@
 
   <groupId>com.divroll</groupId>
   <artifactId>dyno</artifactId>
-  <name>dyno</name>
   <version>0-SNAPHOT</version>
+  <name>dyno</name>
 
   <dependencyManagement>
     <dependencies>

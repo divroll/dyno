@@ -15,6 +15,8 @@
  */
 package com.divroll.dyno;
 
+import com.amazonaws.services.s3.AmazonS3;
+
 /**
  * Builds a {@linkplain Dyno} instance with configuration
  *
@@ -30,6 +32,7 @@ public final class DynoClientBuilder {
     public static final String DEFAULT_KEY_SPACE = ":";
     public static final int DEFAULT_BUFFER_SIZE = 1024;
 
+    private AmazonS3 s3client;
     private String accessKey;
     private String secretKey;
     private String s3Endpoint;
@@ -46,6 +49,11 @@ public final class DynoClientBuilder {
 
     public static DynoClientBuilder simple() {
         return new DynoClientBuilder(null, null, null, null, null, null, null);
+    }
+
+    public final DynoClientBuilder withClient(AmazonS3 s3Client) {
+        this.s3client = s3Client;
+        return this;
     }
 
     /**
@@ -120,7 +128,7 @@ public final class DynoClientBuilder {
      * @return the Dyno instance
      */
     public final Dyno build() {
-        return new Dyno(accessKey, secretKey, s3Endpoint, region, bucketName, keySpace, bufferSize);
+        return new Dyno(s3client, accessKey, secretKey, s3Endpoint, region, bucketName, keySpace, bufferSize);
     }
 
 }
