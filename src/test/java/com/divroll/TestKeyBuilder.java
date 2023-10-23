@@ -38,9 +38,9 @@ public class TestKeyBuilder extends TestCase {
     public void setup() {
         dyno = DynoClientBuilder
                 .simple()
-                .withEndpointConfig("s3.wasabisys.com", "us-east-1")
+                .withEndpointConfig("s3.ap-southeast-1.wasabisys.com", "ap-southeast-1")
                 .withCredentials(Credentials.getAccessKey(), Credentials.getSecretKey())
-                .withBucket("dyno")
+                .withBucket("test-database")
                 .withKeySpace(DynoClientBuilder.DEFAULT_KEY_SPACE)
                 .withBufferSize(1024)
                 .build();
