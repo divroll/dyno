@@ -85,10 +85,22 @@ public class TestKey extends TestCase {
         assertFalse(key.isExist());
     }
 
-    @Test
-    public void testGetEntityValue() {
-        // TODO
-    }
+        @Test
+        public void testGetEntityValue() {
+            // Put entity
+            DataFactory df = new DataFactory();
+            String stringKeyValue = df.getRandomText(20);
+            String stringValue = df.getRandomText(2048);
+            Key key = EntityBuilder.create(dyno)
+                    .with("testkey", stringKeyValue)
+                    .build(stringValue, String.class)
+                    .put();
+            // Get entity value with key
+            Entity<String> entity = key.getEntity(String.class);
+            String entityValue = entity.getValue();
+            assertNotNull(entityValue);
+            assertEquals(stringValue, entityValue);
+        }
 
     @Test
     public void testGetEntity() {

@@ -83,7 +83,6 @@ public final class DynoClientBuilder {
     }
 
     public final DynoClientBuilder withConfiguration(boolean hashKeys, boolean encryptValues) {
-        // TODO
         this.hashKeys = hashKeys;
         this.encryptValues = encryptValues;
         return this;

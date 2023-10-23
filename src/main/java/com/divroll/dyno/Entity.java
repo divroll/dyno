@@ -26,13 +26,13 @@ package com.divroll.dyno;
 public class Entity<T> {
 
     private String key;
-    private Object value;
+    private T value;
     private EntityBuilder builder;
     private Class<T> clazz;
 
     private Entity() {}
 
-    public Entity(EntityBuilder builder, String key, Object value, Class<T> clazz) {
+    public Entity(EntityBuilder builder, String key, T value, Class<T> clazz) {
         this.key = key;
         this.value = value;
         this.builder = builder;
@@ -62,7 +62,7 @@ public class Entity<T> {
      *
      * @return value as an Object
      */
-    public Object getValue() {
+    public T getValue() {
         return value;
     }
 

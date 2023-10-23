@@ -609,9 +609,7 @@ public class Dyno {
             if(s3Client != null) {
                 ObjectMetadata metadata = new ObjectMetadata();
                 metadata.setContentType("application/octet-stream");
-                // TODO: WARNING: No content length specified for stream data.
-                // TODO: Stream contents will be buffered in memory and could result in out of memory errors.
-                // TODO: add `metadata.setContentLength(file.length());`
+                metadata.setContentLength(value.available());
                 PutObjectRequest request = new PutObjectRequest(bucketName, key, value, metadata);
                 request.setMetadata(metadata);
                 PutObjectResult result = s3Client.putObject(request);
