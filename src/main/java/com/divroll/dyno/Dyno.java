@@ -15,7 +15,6 @@
  */
 package com.divroll.dyno;
 
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
@@ -33,7 +32,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -85,7 +83,7 @@ public class Dyno {
     }
 
     /**
-     * Puts an {@linkplain Entity} into the datastore if it does not exists
+     * Puts an {@linkplain Entity} into the datastore if it does not exist
      *
      * @param entity the {@linkplain Entity} to put
      * @return true if operation was successful, false otherwise
@@ -155,9 +153,9 @@ public class Dyno {
      * @param value the byte array value to put
      * @return true if value was put, false if otherwise
      */
-    public boolean put(String key, byte[] value) {
+    public boolean put(String key, byte[] value, boolean putIfAbsent) {
         try {
-            return put(key, ByteSource.wrap(value).openStream());
+            return put(key, ByteSource.wrap(value).openStream(), putIfAbsent);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -178,12 +176,8 @@ public class Dyno {
     public <T> boolean put(String key, T value, Class<T> clazz) {
         boolean result = false;
         try {
-            MessagePack msgpack = new MessagePack();
-            if(!isPrimitive(clazz)) {
-                msgpack.register(clazz);
-            }
-            byte[] raw = msgpack.write(value);
-            result = put(key, raw);
+            byte[] raw = toByteArray(value, clazz);
+            result = put(key, raw, false);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -200,10 +194,8 @@ public class Dyno {
      * @return true if value was put, false if otherwise
      */
     public <T> boolean putIfAbsent(String key, T value, Class<T> clazz) {
-        if(isExists(key)) {
-            return false;
-        }
-        return put(key, value, clazz);
+        byte[] raw = toByteArray(value, clazz);
+        return put(key, raw, true);
     };
 
     /**
@@ -215,7 +207,7 @@ public class Dyno {
      */
     public boolean put(String key, File value) {
         try {
-            return put(key, Files.asByteSource(value).openStream());
+            return put(key, Files.asByteSource(value).openStream(), false);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -255,7 +247,7 @@ public class Dyno {
     }
 
     /**
-     * Put {@linkplain Object} value if key does not exists
+     * Put {@linkplain Object} value if key does not exist
      * Objects must be annotated with {@linkplain org.msgpack.annotation.Message} annotation
      *
      * @param key the string key of the value to put
@@ -265,8 +257,7 @@ public class Dyno {
     public boolean putIfAbsent(String key, Object value) {
         boolean result = false;
         try {
-            MessagePack msgpack = new MessagePack();
-            byte[] raw = msgpack.write(value);
+            byte[] raw = toByteArray(value, (Class<Object>) value.getClass());
             result = putIfAbsent(key, raw);
         } catch (Exception e) {
             e.printStackTrace();
@@ -588,10 +579,14 @@ public class Dyno {
         if(key == null || key.isEmpty()) {
             throw new IllegalArgumentException("Key cannot be empty or null");
         }
-        if(isExists(key)) {
-            return false;
+        return put(key, value, true);
+    }
+
+    public boolean put(String key, InputStream value) {
+        if(key == null || key.isEmpty()) {
+            throw new IllegalArgumentException("Key cannot be empty or null");
         }
-        return put(key, value);
+        return put(key, value, false);
     }
 
     /**
@@ -601,9 +596,14 @@ public class Dyno {
      * @param value the {@linkplain InputStream} value to put
      * @return true if value was put, false if otherwise
      */
-    public boolean put(String key, InputStream value) {
+    public boolean put(String key, InputStream value, boolean putIfAbsent) {
         if(value == null || key == null || key.isEmpty()) {
             throw new IllegalArgumentException("Key and/or value cannot be empty or null");
+        }
+        if (putIfAbsent) {
+            if(isExists(key)) {
+                return false;
+            }
         }
         try {
             if(s3Client != null) {
@@ -688,4 +688,17 @@ public class Dyno {
         return false;
     }
 
+
+    private <T> byte[] toByteArray(T value, Class<T> clazz) {
+        MessagePack msgpack = new MessagePack();
+        if(!isPrimitive(clazz)) {
+            msgpack.register(clazz);
+        }
+        try {
+            byte[] raw = msgpack.write(value);
+            return raw;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -47,7 +47,7 @@ public class TestDyno extends TestCase {
     public void setup() {
         dyno = DynoClientBuilder
                 .simple()
-                .withEndpointConfig("s3.ap-southeast-1.wasabisys.com", "ap-southeast-1")
+                .withEndpointConfig("http://127.0.0.1:9000", "us-east-1")
                 .withCredentials(Credentials.getAccessKey(), Credentials.getSecretKey())
                 .withBucket("test-database")
                 .withKeySpace(DynoClientBuilder.DEFAULT_KEY_SPACE)
@@ -373,10 +373,9 @@ public class TestDyno extends TestCase {
         String key = df.getRandomText(20);
         String value = df.getRandomText(1024);
         byte[] toPut = value.getBytes(Charset.defaultCharset());
-        assertTrue(dyno.put(key, toPut));
+        assertTrue(dyno.put(key, toPut, false));
         byte[] bytes = dyno.getByte(key);
         assertNotNull(bytes);
         assertEquals(toPut.length, bytes.length);
     }
-
 }
