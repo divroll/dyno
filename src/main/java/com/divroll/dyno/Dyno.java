@@ -576,49 +576,46 @@ public class Dyno {
      * @return true if value was put, false if otherwise
      */
     public boolean putIfAbsent(String key, InputStream value) {
-        if(key == null || key.isEmpty()) {
-            throw new IllegalArgumentException("Key cannot be empty or null");
-        }
+        validateInputs(key, value);
+
         return put(key, value, true);
     }
 
     public boolean put(String key, InputStream value) {
-        if(key == null || key.isEmpty()) {
-            throw new IllegalArgumentException("Key cannot be empty or null");
-        }
+        validateInputs(key, value);
+
         return put(key, value, false);
     }
 
     /**
      * Put {@linkplain InputStream} value
      *
-     * @param key the string key to put
+     * @param key the unique identifier to store the {@linkplain InputStream}
      * @param value the {@linkplain InputStream} value to put
-     * @return true if value was put, false if otherwise
+     * @return true if {@linkplain InputStream} was stored successfully, false otherwise
      */
     public boolean put(String key, InputStream value, boolean putIfAbsent) {
-        if(value == null || key == null || key.isEmpty()) {
-            throw new IllegalArgumentException("Key and/or value cannot be empty or null");
+        validateInputs(key, value);
+
+        if(bucketName == null) {
+            throw new IllegalArgumentException("bucketName cannot be null");
         }
-        if (putIfAbsent) {
-            if(isExists(key)) {
-                return false;
-            }
+
+        if (putIfAbsent && isExists(key)) {
+            return false;
         }
-        try {
-            if(s3Client != null) {
-                ObjectMetadata metadata = new ObjectMetadata();
-                metadata.setContentType("application/octet-stream");
-                metadata.setContentLength(value.available());
-                PutObjectRequest request = new PutObjectRequest(bucketName, key, value, metadata);
-                request.setMetadata(metadata);
-                PutObjectResult result = s3Client.putObject(request);
-                return result != null;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+
+        if(s3Client == null) {
+            throw new IllegalStateException("S3 client is not initialized");
         }
-        return false;
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType("application/octet-stream");
+        metadata.setContentLength(calculateInputStreamLength(value));
+        PutObjectRequest request = new PutObjectRequest(bucketName, key, value, metadata);
+        request.setMetadata(metadata);
+        PutObjectResult result = s3Client.putObject(request);
+        return result != null;
     }
 
     /**
@@ -667,6 +664,12 @@ public class Dyno {
         }
     }
 
+    private void validateInputs(String key, InputStream value) {
+        if(value == null || key == null || key.isEmpty()) {
+            throw new IllegalArgumentException("Key and/or value cannot be empty or null");
+        }
+    }
+
     /**
      * Check if class is a Java primitive type
      *
@@ -688,7 +691,6 @@ public class Dyno {
         return false;
     }
 
-
     private <T> byte[] toByteArray(T value, Class<T> clazz) {
         MessagePack msgpack = new MessagePack();
         if(!isPrimitive(clazz)) {
@@ -699,6 +701,15 @@ public class Dyno {
             return raw;
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    // Create a method that calculates InputStream length without consuming it
+    public static long calculateInputStreamLength(InputStream source) {
+        try {
+            return source.available();
+        } catch (IOException e) {
+            return -1;
         }
     }
 }
